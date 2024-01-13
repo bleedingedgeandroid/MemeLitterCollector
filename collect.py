@@ -5,7 +5,7 @@ device = input("Codename: ")
 
 content = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/miui/full/{}.md".format(device))
 
-images = re.findall("\"\/.*\/.*\/.*\/\"",content.text)
+images = set(re.findall("\"\/.*\/.*\/.*\/\"",content.text))
 dload_size = 0 #GB
 for i in images:
     os=i[:-2].split("/")[1]
