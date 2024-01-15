@@ -7,6 +7,7 @@ from github import Github,Auth,UnknownObjectException
 import os as OS
 from urllib.parse import urlparse
 import math
+import yaml
 
 #device = input("Codename: ")
 device="spes"
@@ -54,9 +55,13 @@ for i in images:
     print(actual_size)
     total_size +=actual_size
     prettified_page = BeautifulSoup(release.text).prettify()
+    data_str = re.findall("(?s)---.*---",prettified_page)[0][:-3]
+    data_yml = yaml.safe_load(data_str)
+    data_str = "{} \n\r{}".format(data_yml['name'],data_yml['title'])
+    print(data_str)
     all_links = re.findall(valid_url_regex,prettified_page)
     links = seperateRecoveryFastboot(all_links)
-    releases.append([os,ver,links,actual_size])
+    releases.append([os,ver,links,actual_size,data_str])
 
 print("Collecting {} puppies".format(device))
 print("Xiaomi has {} GB of puppies".format(total_size))
