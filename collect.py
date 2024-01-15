@@ -2,9 +2,9 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-from env import TOKEN,DEVICE,USER,REPO
+from env import TOKEN, DEVICE, USER, REPO
 from github import Github, Auth, UnknownObjectException
-import os as OS
+import os as host
 from urllib.parse import urlparse
 import math
 import yaml
@@ -88,17 +88,21 @@ for i in releases:
         print("No release found for {}".format(i[1]))
 
 print("Need to download {} gigabytes of images".format(total_size))
-m = releases[1]
 
+m = releases[1]
+files_fb = ""
+fastboot_filename = ""
+files_r = ""
+filename_r = ""
 if not len(m[2][0]) == 0:
     print("Downloading FastBoot Images for {}".format(m[1]))
-    fastboot_filename = OS.path.basename(urlparse(m[2][0][0]).path)
+    fastboot_filename = host.path.basename(urlparse(m[2][0][0]).path)
     axel_url_argument = ' '.join(m[2][0])
     print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
-    OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
+    host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
     print("Splitting FastBoot Images for {}".format(m[1]))
-    OS.system("split -d -a 1 -b 1950MB {} {}.part".format(fastboot_filename, fastboot_filename))
-    fastboot_file_size = OS.stat(fastboot_filename).st_size / (1000 * 1000)
+    host.system("split -d -a 1 -b 1950MB {} {}.part".format(fastboot_filename, fastboot_filename))
+    fastboot_file_size = host.stat(fastboot_filename).st_size / (1000 * 1000)
     fastboot_parts = math.ceil(fastboot_file_size / 1950)
     files_fb = []
     for x in range(fastboot_parts):
@@ -106,13 +110,13 @@ if not len(m[2][0]) == 0:
         files_fb.append(fastboot_filename + ".part{}".format(x))
 if not len(m[2][1]) == 0:
     print("Downloading Recovery Images for {}".format(m[1]))
-    filename_r = OS.path.basename(urlparse(m[2][1][0]).path)
+    filename_r = host.path.basename(urlparse(m[2][1][0]).path)
     axel_url_argument = ' '.join(m[2][1])
     print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename_r, axel_url_argument))
-    OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r, axel_url_argument))
+    host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r, axel_url_argument))
     print("Splitting Recovery Images for {}".format(m[1]))
-    OS.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
-    recovery_file_size = OS.stat(filename_r).st_size / (1000 * 1000)
+    host.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
+    recovery_file_size = host.stat(filename_r).st_size / (1000 * 1000)
     recovery_parts = math.ceil(recovery_file_size / 1950)
     files_r = []
     for x in range(recovery_parts):
