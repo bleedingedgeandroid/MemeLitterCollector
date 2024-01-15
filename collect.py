@@ -119,15 +119,15 @@ if not len(m[2][1]) == 0:
         print("Added Recovery part {}".format(x))
         files_r.append(filename_r + ".part{}".format(x))
 if (not len(m[2][0]) == 0) and (not len(m[2][0]) == 0):
-    release_notes = strings.release_notes_both.format(data=i[4], fileparts_tgz=' '.join(files_fb),
+    release_notes = strings.release_notes_both.format(data=m[4], fileparts_tgz=' '.join(files_fb),
                                                       filename_fb=fastboot_filename, fileparts_zip=' '.join(files_r),
                                                       fileparts_tgz_win='+'.join(files_fb),
                                                       fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
 elif len(m[2][1]) == 0:
-    release_notes = strings.release_notes_fb.format(data=i[4], fileparts_tgz=' '.join(files_fb),
+    release_notes = strings.release_notes_fb.format(data=m[4], fileparts_tgz=' '.join(files_fb),
                                                     filename_fb=fastboot_filename, fileparts_tgz_win='+'.join(files_fb))
 else:
-    release_notes = strings.release_notes_r.format(data=i[4], fileparts_zip=' '.join(files_r),
+    release_notes = strings.release_notes_r.format(data=m[4], fileparts_zip=' '.join(files_r),
                                                    fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
 
 github_release = mirror_repository.create_git_tag_and_release(tag=m[1], tag_message=m[1], release_name=m[1],
