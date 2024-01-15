@@ -2,13 +2,14 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-from env import TOKEN, DEVICE, USER, REPO
+from env import TOKEN, DEVICE, USER, REPO, MAX_THREADS
 from github import Github, Auth, UnknownObjectException
 import os as host
 from urllib.parse import urlparse
 import math
 import yaml
 import strings
+from multiprocessing.pool import ThreadPool
 
 authorization_token = Auth.Token(TOKEN)
 github_remote = Github(auth=authorization_token)
@@ -89,62 +90,74 @@ for i in releases:
 
 print("Need to download {} gigabytes of images".format(total_size))
 
-m = releases[1]
-files_fb = ""
-fastboot_filename = ""
-files_r = ""
-filename_r = ""
-if not len(m[2][0]) == 0:
-    print("Downloading FastBoot Images for {}".format(m[1]))
-    fastboot_filename = host.path.basename(urlparse(m[2][0][0]).path)
-    axel_url_argument = ' '.join(m[2][0])
-    print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
-    host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
-    print("Splitting FastBoot Images for {}".format(m[1]))
-    host.system("split -d -a 1 -b 1950MB {} {}.part".format(fastboot_filename, fastboot_filename))
-    fastboot_file_size = host.stat(fastboot_filename).st_size / (1000 * 1000)
-    fastboot_parts = math.ceil(fastboot_file_size / 1950)
-    files_fb = []
-    for x in range(fastboot_parts):
-        print("Added FastBoot part {}".format(x))
-        files_fb.append(fastboot_filename + ".part{}".format(x))
-if not len(m[2][1]) == 0:
-    print("Downloading Recovery Images for {}".format(m[1]))
-    filename_r = host.path.basename(urlparse(m[2][1][0]).path)
-    axel_url_argument = ' '.join(m[2][1])
-    print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename_r, axel_url_argument))
-    host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r, axel_url_argument))
-    print("Splitting Recovery Images for {}".format(m[1]))
-    host.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
-    recovery_file_size = host.stat(filename_r).st_size / (1000 * 1000)
-    recovery_parts = math.ceil(recovery_file_size / 1950)
-    files_r = []
-    for x in range(recovery_parts):
-        print("Added Recovery part {}".format(x))
-        files_r.append(filename_r + ".part{}".format(x))
-if (not len(m[2][0]) == 0) and (not len(m[2][0]) == 0):
-    release_notes = strings.release_notes_both.format(data=m[4], fileparts_tgz=' '.join(files_fb),
-                                                      filename_fb=fastboot_filename, fileparts_zip=' '.join(files_r),
-                                                      fileparts_tgz_win='+'.join(files_fb),
-                                                      fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
-elif len(m[2][1]) == 0:
-    release_notes = strings.release_notes_fb.format(data=m[4], fileparts_tgz=' '.join(files_fb),
-                                                    filename_fb=fastboot_filename, fileparts_tgz_win='+'.join(files_fb))
-else:
-    release_notes = strings.release_notes_r.format(data=m[4], fileparts_zip=' '.join(files_r),
-                                                   fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
 
-github_release = mirror_repository.create_git_tag_and_release(tag=m[1], tag_message=m[1], release_name=m[1],
-                                                              release_message=release_notes,
-                                                              object=mirror_repository.get_branch(
-                                                                  mirror_repository.default_branch).commit.sha,
-                                                              type="commit")
-if not len(m[2][0]) == 0:
-    for m in files_fb:
-        print("Uploading FastBoot part {}".format(m))
-        github_release.upload_asset(path=m)
+def download_and_upload(m):
+    files_fb = ""
+    fastboot_filename = ""
+    files_r = ""
+    filename_r = ""
+    if not len(m[2][0]) == 0:
+        print("Downloading FastBoot Images for {}".format(m[1]))
+        fastboot_filename = host.path.basename(urlparse(m[2][0][0]).path)
+        axel_url_argument = ' '.join(m[2][0])
+        print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
+        host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
+        print("Splitting FastBoot Images for {}".format(m[1]))
+        host.system("split -d -a 1 -b 1950MB {} {}.part".format(fastboot_filename, fastboot_filename))
+        fastboot_file_size = host.stat(fastboot_filename).st_size / (1000 * 1000)
+        fastboot_parts = math.ceil(fastboot_file_size / 1950)
+        files_fb = []
+        for x in range(fastboot_parts):
+            print("Added FastBoot part {}".format(x))
+            files_fb.append(fastboot_filename + ".part{}".format(x))
+    if not len(m[2][1]) == 0:
+        print("Downloading Recovery Images for {}".format(m[1]))
+        filename_r = host.path.basename(urlparse(m[2][1][0]).path)
+        axel_url_argument = ' '.join(m[2][1])
+        print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename_r, axel_url_argument))
+        host.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r, axel_url_argument))
+        print("Splitting Recovery Images for {}".format(m[1]))
+        host.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
+        recovery_file_size = host.stat(filename_r).st_size / (1000 * 1000)
+        recovery_parts = math.ceil(recovery_file_size / 1950)
+        files_r = []
+        for x in range(recovery_parts):
+            print("Added Recovery part {}".format(x))
+            files_r.append(filename_r + ".part{}".format(x))
+    if (not len(m[2][0]) == 0) and (not len(m[2][0]) == 0):
+        release_notes = strings.release_notes_both.format(data=m[4], fileparts_tgz=' '.join(files_fb),
+                                                          filename_fb=fastboot_filename,
+                                                          fileparts_zip=' '.join(files_r),
+                                                          fileparts_tgz_win='+'.join(files_fb),
+                                                          fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
+    elif len(m[2][1]) == 0:
+        release_notes = strings.release_notes_fb.format(data=m[4], fileparts_tgz=' '.join(files_fb),
+                                                        filename_fb=fastboot_filename,
+                                                        fileparts_tgz_win='+'.join(files_fb))
+    else:
+        release_notes = strings.release_notes_r.format(data=m[4], fileparts_zip=' '.join(files_r),
+                                                       fileparts_zip_win='+'.join(files_r), filename_r=filename_r)
 
-if not len(m[2][1]) == 0:
-    for m in files_r:
-        print("Uploading Recovery part {}".format(m))
-        github_release.upload_asset(path=m)
+    github_release = mirror_repository.create_git_tag_and_release(tag=m[1], tag_message=m[1], release_name=m[1],
+                                                                  release_message=release_notes,
+                                                                  object=mirror_repository.get_branch(
+                                                                      mirror_repository.default_branch).commit.sha,
+                                                                  type="commit")
+    if not len(m[2][0]) == 0:
+        for m in files_fb:
+            print("Uploading FastBoot part {}".format(m))
+            github_release.upload_asset(path=m)
+
+    if not len(m[2][1]) == 0:
+        for m in files_r:
+            print("Uploading Recovery part {}".format(m))
+            github_release.upload_asset(path=m)
+
+
+thread_pool = ThreadPool(MAX_THREADS)
+
+for m in releases:
+    thread_pool.apply_async(download_and_upload, (m,))
+
+thread_pool.close()
+thread_pool.join()
