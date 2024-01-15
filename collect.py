@@ -140,15 +140,16 @@ def download_and_upload(m):
                                                                   object=mirror_repository.get_branch(
                                                                       mirror_repository.default_branch).commit.sha,
                                                                   type="commit")
+    if not len(m[2][1]) == 0:
+        for m in files_r:
+            print("Uploading Recovery part {}".format(m))
+            github_release.upload_asset(path=m)
+
     if not len(m[2][0]) == 0:
         for m in files_fb:
             print("Uploading FastBoot part {}".format(m))
             github_release.upload_asset(path=m)
 
-    if not len(m[2][1]) == 0:
-        for m in files_r:
-            print("Uploading Recovery part {}".format(m))
-            github_release.upload_asset(path=m)
 
 
 thread_pool = ThreadPool(MAX_THREADS)
