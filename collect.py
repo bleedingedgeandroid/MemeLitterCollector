@@ -11,6 +11,7 @@ import yaml
 import strings
 from multiprocessing.pool import ThreadPool
 
+
 authorization_token = Auth.Token(TOKEN)
 github_remote = Github(auth=authorization_token)
 mirror_repository = github_remote.get_repo("{}/{}".format(USER, REPO))
@@ -144,11 +145,17 @@ def download_and_upload(m):
         for m in files_r:
             print("Uploading Recovery part {}".format(m))
             github_release.upload_asset(path=m)
+            host.remove(m)
 
     if not len(m[2][0]) == 0:
         for m in files_fb:
             print("Uploading FastBoot part {}".format(m))
             github_release.upload_asset(path=m)
+            host.remove(m)
+
+    host.remove(fastboot_filename)
+    host.remove(files_r)
+
 
 
 
