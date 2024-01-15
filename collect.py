@@ -112,7 +112,7 @@ def download_and_upload(m):
         print("Downloading Recovery Images for {}".format(m[1]))
         filename_r = host.path.basename(urlparse(m[2][1][0]).path)
         axel_url_argument = ' '.join(m[2][1])
-        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} > axel.log.{} '.format(filename_r, axel_url_argument,fastboot_filename))
+        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} > axel.log.{} '.format(filename_r, axel_url_argument,filename_r))
         print("Splitting Recovery Images for {}".format(m[1]))
         host.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
         recovery_file_size = host.stat(filename_r).st_size / (1000 * 1000)
