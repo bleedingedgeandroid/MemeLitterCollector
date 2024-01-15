@@ -88,3 +88,28 @@ print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename_r,vali
 OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r,valid_url_arg))
 print("Splitting Recovery Images for {}".format(m[1]))
 OS.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r,filename_r))
+
+filesize_fb = OS.stat(filename_fb).st_size / (1000*1000)
+numpart_fb = math.ceil(filesize_fb / 1950)
+files_fb = []
+for x in range(numpart_fb):
+    print("Added FastBoot part {}".format(x))
+    files_fb.append(filename_fb+".part{}".format(x))
+
+filesize_r = OS.stat(filename_r).st_size / (1000*1000)
+numpart_r = math.ceil(filesize_r / 1950)
+files_r = []
+for x in range(numpart_r):
+    print("Added Recovery part {}".format(x))
+    files_r.append(filename_r+".part{}".format(x))
+
+github_release = repo.create_git_tag_and_release(tag=m[1],tag_message=m[1],release_name=m[1],release_message='''
+TODO: ADD FILE INFO + WAYS TO CONCAT
+''',object=repo.get_branch(repo.default_branch).commit.sha,type="commit")
+
+for m in files_fb:
+    print("Uploading FastBoot part {}".format(m))
+    github_release.upload_asset(path=m)
+for m in files_r:
+    print("Uploading Recovery part {}".format(m))
+    github_release.upload_asset(path=m)
