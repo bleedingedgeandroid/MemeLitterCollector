@@ -2,7 +2,7 @@
 import requests
 import re
 from bs4 import BeautifulSoup
-from env import TOKEN
+from env import TOKEN,DEVICE,USER,REPO
 from github import Github, Auth, UnknownObjectException
 import os as OS
 from urllib.parse import urlparse
@@ -10,14 +10,11 @@ import math
 import yaml
 import strings
 
-# device = input("Codename: ")
-device = "spes"
-user = "MIUI-MIRROR"
 authorization_token = Auth.Token(TOKEN)
 github_remote = Github(auth=authorization_token)
-mirror_repository = github_remote.get_repo("{}/{}".format(user, device))
+mirror_repository = github_remote.get_repo("{}/{}".format(USER, REPO))
 device_images = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io"
-                             "/master/pages/miui/full/{}.md".format(device))
+                             "/master/pages/miui/full/{}.md".format(DEVICE))
 size_regex = r"\d*\.?\d* GB"
 
 
@@ -60,11 +57,11 @@ for i in images:
     release = requests.get(
         "https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/"
         "{}/updates/{}/{}.md".format(
-            os, device, ver))
+            os, DEVICE, ver))
     print(
         "https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/"
         "{}/updates/{}/{}.md".format(
-            os, device, ver))
+            os, DEVICE, ver))
     actual_size = summation(re.findall(size_regex, release.text))
     print(actual_size)
     total_size += actual_size
@@ -76,7 +73,7 @@ for i in images:
     links = separate_recovery_and_fastboot_links(all_links)
     releases.append([os, ver, links, actual_size, data_str])
 
-print("Collecting {} puppies".format(device))
+print("Collecting {} puppies".format(DEVICE))
 print("Xiaomi has {} GB of puppies".format(total_size))
 
 releases = sort_nestedlist(releases)
@@ -92,6 +89,7 @@ for i in releases:
 
 print("Need to download {} gigabytes of images".format(total_size))
 m = releases[1]
+
 if not len(m[2][0]) == 0:
     print("Downloading FastBoot Images for {}".format(m[1]))
     fastboot_filename = OS.path.basename(urlparse(m[2][0][0]).path)
