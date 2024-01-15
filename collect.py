@@ -8,6 +8,7 @@ import os as OS
 from urllib.parse import urlparse
 import math
 import yaml
+import strings
 
 #device = input("Codename: ")
 device="spes"
@@ -57,8 +58,7 @@ for i in images:
     prettified_page = BeautifulSoup(release.text).prettify()
     data_str = re.findall("(?s)---.*---",prettified_page)[0][:-3]
     data_yml = yaml.safe_load(data_str)
-    data_str = "{} \n\r{}".format(data_yml['name'],data_yml['title'])
-    print(data_str)
+    data_str = "# {} \n\r# {}".format(data_yml['name'],data_yml['title'])
     all_links = re.findall(valid_url_regex,prettified_page)
     links = seperateRecoveryFastboot(all_links)
     releases.append([os,ver,links,actual_size,data_str])
@@ -108,9 +108,7 @@ for x in range(numpart_r):
     print("Added Recovery part {}".format(x))
     files_r.append(filename_r+".part{}".format(x))
 
-github_release = repo.create_git_tag_and_release(tag=m[1],tag_message=m[1],release_name=m[1],release_message='''
-TODO: ADD FILE INFO + WAYS TO CONCAT
-''',object=repo.get_branch(repo.default_branch).commit.sha,type="commit")
+github_release = repo.create_git_tag_and_release(tag=m[1],tag_message=m[1],release_name=m[1],release_message=strings.release_notes.format(data=i[4],fileparts_tgz=' '.join(files_fb),filename_fb=filename_fb,fileparts_zip=' '.join(files_r),fileparts_tgz_win='+'.join(files_fb),fileparts_zip_win='+'.join(files_r),filename_r=filename_r),object=repo.get_branch(repo.default_branch).commit.sha,type="commit")
 
 for m in files_fb:
     print("Uploading FastBoot part {}".format(m))
