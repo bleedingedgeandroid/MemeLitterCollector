@@ -18,7 +18,7 @@ device_images = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUp
                              "/master/pages/miui/full/{}.md".format(DEVICE))
 size_regex = r"\d*\.?\d* GB"
 
-
+print("Script powered by XiaomiFirmwareUpdater")
 def sort_nestedlist(nested_list):
     nested_list.sort(key=lambda os_entry: os_entry[1])
     return nested_list
@@ -32,7 +32,6 @@ def summation(sizes):
 
 
 def separate_recovery_and_fastboot_links(mixed_links):
-    print(mixed_links)
     recovery = []
     fastboot = []
     for j in mixed_links:
@@ -100,7 +99,7 @@ def download_and_upload(m):
         print("Downloading FastBoot Images for {}".format(m[1]))
         fastboot_filename = host.path.basename(urlparse(m[2][0][0]).path)
         axel_url_argument = ' '.join(m[2][0])
-        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(fastboot_filename, axel_url_argument))
+        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} > axel.log.{}'.format(fastboot_filename, axel_url_argument,fastboot_filename))
         print("Splitting FastBoot Images for {}".format(m[1]))
         host.system("split -d -a 1 -b 1950MB {} {}.part".format(fastboot_filename, fastboot_filename))
         fastboot_file_size = host.stat(fastboot_filename).st_size / (1000 * 1000)
@@ -113,7 +112,7 @@ def download_and_upload(m):
         print("Downloading Recovery Images for {}".format(m[1]))
         filename_r = host.path.basename(urlparse(m[2][1][0]).path)
         axel_url_argument = ' '.join(m[2][1])
-        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r, axel_url_argument))
+        host.system('axel -p -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} > axel.log.{} '.format(filename_r, axel_url_argument,fastboot_filename))
         print("Splitting Recovery Images for {}".format(m[1]))
         host.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r, filename_r))
         recovery_file_size = host.stat(filename_r).st_size / (1000 * 1000)
