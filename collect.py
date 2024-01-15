@@ -4,8 +4,8 @@ import re
 from bs4 import BeautifulSoup
 from env import TOKEN
 from github import Github,Auth,UnknownObjectException
-
-
+import os as OS
+from urllib.parse import urlparse
 
 #device = input("Codename: ")
 device="spes"
@@ -15,48 +15,46 @@ hub = Github(auth=auth)
 repo = hub.get_repo("{}/{}".format(user,device))
 print(repo.url)
 content = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/miui/full/{}.md".format(device))
-fb_rom_regex=''' *<li style=\"padding-bottom: 10px;\">
- *<h5><b>Type: </b>Fastboot</h5>
- *</li>
- *<li style=\"padding-bottom: 10px;\">
- *<h5><b>Size: </b>\d*[.]\d GB</h5>
- *</li>'''
-
+size_regex="\d*\.?\d* GB"
 def sortInternal(list):
     list.sort(key=lambda x: x[1])
     return list
-
+def summation(sizes):
+    j = 0 # GB
+    for k in sizes:
+        j += float(k[:-3])
+    return j
+def seperateRecoveryFastboot(links):
+    print(links)
+    recovery = []
+    fastboot = []
+    for j in links:
+        if j[-3:] == "tgz":
+            print("Found FastBoot link {}".format(j))
+            fastboot.append(j)
+        elif j[-3:] == "zip":
+            print("Found Recovery Link {}".format(j))
+            recovery.append(j)
+    return [fastboot,recovery]
 images = set(re.findall("\"\/.*\/.*\/.*\/\"",content.text))
 #dload_size = 0 #GB
 total_size = 0 #GB
 
 allowed_domains = "cdn-ota\.azureedge\.net|cdnorg\.d\.miui\.com|bn\.d\.miui\.com"
-valid_url_regex = "https://({})/.*\.tgz".format(allowed_domains)
+valid_url_regex = "https:\/\/(?:{})/.*\.(?:zip|tgz)".format(allowed_domains)
 releases =[]
 
 for i in images:
     os=i[:-2].split("/")[1]
     ver= i[:-2].split("/")[-1]
     release = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/{}/updates/{}/{}.md".format(os,device,ver))
-    if "fastboot" not in release.text.lower():
-        print("Skipping {}, no FastBoot Download found.".format(ver))
-        continue
     print("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/{}/updates/{}/{}.md".format(os,device,ver))
-    fb_size = re.findall(fb_rom_regex,release.text)
-    if len(fb_size) != 1:
-        print("Something went wrong. Exiting.")
-        continue
-    actual_size = float(re.search("\d*[.]\d* GB",fb_size[0]).group()[:-3]) # remove " GB"
+    actual_size = summation(re.findall(size_regex,release.text))
     print(actual_size)
     total_size +=actual_size
-    prettified_page = BeautifulSoup(requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUpdater/xiaomifirmwareupdater.github.io/master/pages/{}/updates/{}/{}.md".format(os,device,ver)).text).prettify()
-    all_links = re.findall(" *<button class=\"btn btn-primary\" id=\"download\" onclick=\"window\.open\('https://.*\.tgz', '_blank'\);\" style=\"margin: 7px;\" type=\"button\">",prettified_page)
-    links = []
-    for k in all_links:
-        f=re.search(valid_url_regex, k)
-        if f:
-            links.append(f[0])
-    print(links)
+    prettified_page = BeautifulSoup(release.text).prettify()
+    all_links = re.findall(valid_url_regex,prettified_page)
+    links = seperateRecoveryFastboot(all_links)
     releases.append([os,ver,links,actual_size])
 
 print("Collecting {} puppies".format(device))
@@ -65,7 +63,6 @@ print("Xiaomi has {} GB of puppies".format(total_size))
 releases = sortInternal(releases)
 
 for i in releases:
-    print(i[3])
     try:
         repo.get_release(i[1]) # This will error out if the repo does not have this release.
         print("Release found for {}".format(i[1]))
