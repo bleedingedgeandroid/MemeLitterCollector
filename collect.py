@@ -6,6 +6,7 @@ from env import TOKEN
 from github import Github,Auth,UnknownObjectException
 import os as OS
 from urllib.parse import urlparse
+import math
 
 #device = input("Codename: ")
 device="spes"
@@ -72,18 +73,18 @@ for i in releases:
         print("No release found for {}".format(i[1]))
 
 print("Need to download {} gigabytes of images".format(total_size))
-m = releases[1]
+m = releases[2]
 print("Downloading FastBoot Images for {}".format(m[1]))
-filename = OS.path.basename(urlparse(m[2][0][0]).path)
+filename_fb = OS.path.basename(urlparse(m[2][0][0]).path)
 valid_url_arg = ' '.join(m[2][0])
-print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename,valid_url_arg))
-OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename,valid_url_arg))
+print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_fb,valid_url_arg))
+OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_fb,valid_url_arg))
 print("Splitting FastBoot Images for {}".format(m[1]))
-OS.system("split -d -b 1950MB {} {}.part".format(filename,filename))
+OS.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_fb,filename_fb))
 print("Downloading Recovery Images for {}".format(m[1]))
-filename = OS.path.basename(urlparse(m[2][1][0]).path)
+filename_r = OS.path.basename(urlparse(m[2][1][0]).path)
 valid_url_arg = ' '.join(m[2][1])
-print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename,valid_url_arg))
-OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename,valid_url_arg))
+print('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {} '.format(filename_r,valid_url_arg))
+OS.system('axel -c -n 100 -U "MIUI-MIRROR-BOT/1.0" -o {} {}'.format(filename_r,valid_url_arg))
 print("Splitting Recovery Images for {}".format(m[1]))
-OS.system("split -d -b 1950MB {} {}.part".format(filename,filename))
+OS.system("split -d -a 1 -b 1950MB {} {}.part".format(filename_r,filename_r))
