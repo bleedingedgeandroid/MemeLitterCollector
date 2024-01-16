@@ -48,7 +48,7 @@ def separate_recovery_and_fastboot_links(mixed_links):
 images = set(re.findall(r"\"/.*/.*/.*/\"", device_images.text))
 total_size = 0  # GB
 
-allowed_domains = r"cdn-ota\.azureedge\.net|cdnorg\.d\.miui\.com|bn\.d\.miui\.com"
+allowed_domains = r"cdn-ota\.azureedge\.net|bn\.d\.miui\.com"
 valid_url_regex = r"https:\/\/(?:{})/.*\.(?:zip|tgz)".format(allowed_domains)
 releases = []
 
