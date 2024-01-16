@@ -10,7 +10,7 @@ import math
 import yaml
 import strings
 from multiprocessing.pool import ThreadPool
-
+import copy
 
 authorization_token = Auth.Token(TOKEN)
 github_remote = Github(auth=authorization_token)
@@ -20,9 +20,7 @@ device_images = requests.get("https://raw.githubusercontent.com/XiaomiFirmwareUp
 size_regex = r"\d*\.?\d* GB"
 
 print("Script powered by XiaomiFirmwareUpdater")
-def sort_nestedlist(nested_list):
-    nested_list.sort(key=lambda os_entry: os_entry[1])
-    return nested_list
+print("Collecting {} puppies".format(DEVICE))
 
 
 def summation(sizes):
@@ -74,12 +72,12 @@ for i in images:
     links = separate_recovery_and_fastboot_links(all_links)
     releases.append([os, ver, links, actual_size, data_str])
 
-print("Collecting {} puppies".format(DEVICE))
 print("Xiaomi has {} GB of puppies".format(total_size))
 
-releases = sort_nestedlist(releases)
+releases.sort(key=lambda x: x[1])
 
-for i in releases:
+releases_copy = copy.deepcopy(releases) # You cant remove while iterating(you can but skips 2 for every remove since index messes up)
+for i in releases_copy:
     try:
         mirror_repository.get_release(i[1])  # This will error out if the repo does not have this release.
         print("Release found for {}".format(i[1]))
@@ -88,7 +86,7 @@ for i in releases:
     except UnknownObjectException:
         print("No release found for {}".format(i[1]))
 
-print("Need to download {} gigabytes of images".format(total_size))
+print("Need to download {} gigabytes of images({} images)".format(total_size, len(releases)))
 
 
 def download_and_upload(m):
@@ -141,22 +139,20 @@ def download_and_upload(m):
                                                                   object=mirror_repository.get_branch(
                                                                       mirror_repository.default_branch).commit.sha,
                                                                   type="commit")
-    if not len(m[2][1]) == 0:
-        for m in files_r:
-            print("Uploading Recovery part {}".format(m))
-            github_release.upload_asset(path=m)
-            host.remove(m)
-
     if not len(m[2][0]) == 0:
         for m in files_fb:
             print("Uploading FastBoot part {}".format(m))
             github_release.upload_asset(path=m)
             host.remove(m)
 
+    if not len(m[2][1]) == 0:
+        for m in files_r:
+            print("Uploading Recovery part {}".format(m))
+            github_release.upload_asset(path=m)
+            host.remove(m)
+
     host.remove(fastboot_filename)
     host.remove(filename_r)
-
-
 
 
 thread_pool = ThreadPool(MAX_THREADS)
