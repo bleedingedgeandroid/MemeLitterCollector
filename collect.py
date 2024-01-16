@@ -72,7 +72,7 @@ for i in images:
     links = separate_recovery_and_fastboot_links(all_links)
     releases.append([os, ver, links, actual_size, data_str])
 
-print("Xiaomi has {} GB of puppies".format(total_size))
+print("Xiaomi has {} GB of puppies({} puppies)".format(total_size,len(releases)))
 
 releases.sort(key=lambda x: x[1])
 
