@@ -154,7 +154,7 @@ def download_and_upload(m):
             host.remove(m)
 
     host.remove(fastboot_filename)
-    host.remove(files_r)
+    host.remove(filename_r)
 
 
 
